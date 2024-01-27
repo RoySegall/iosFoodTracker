@@ -1,10 +1,3 @@
-//
-//  FoodTrackerApp.swift
-//  FoodTracker
-//
-//  Created by Roy Segall on 27/01/2024.
-//
-
 import SwiftUI
 
 @main
