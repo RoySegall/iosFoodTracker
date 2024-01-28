@@ -22,7 +22,7 @@ struct ContentView: View {
                                 HStack {
                                     Text(item.name).font(.headline).textCase(.uppercase)
                                     Spacer()
-                                    ForEach(0 ..< Int(item.stars)) { index in
+                                    ForEach(0 ..< item.stars, id: \.self) { index in
                                         Text("⭐️").font(.custom("rating", fixedSize: 13.0))
                                     }
                                 }
@@ -45,9 +45,11 @@ struct ContentView: View {
                                     $0.id == item.id
                                 }
                                 
-                                self.foodItemsStore.editedFoodItemIndex = editItemIndex;
-                                self.foodItemsStore.createdOrEditedFoodItem = self.foodItemsStore.foodItems[editItemIndex!]
-                                self.showModal = true
+                                Task {
+                                    self.foodItemsStore.editedFoodItemIndex = editItemIndex;
+                                    self.foodItemsStore.createdOrEditedFoodItem = self.foodItemsStore.foodItems[editItemIndex!]
+                                    self.showModal = true
+                                }
                             }) {
                                 Text("✏️ Edit")
                             }
@@ -74,7 +76,7 @@ struct ContentView: View {
                     ScrollView(.horizontal) {
                         HStack {
                             ForEach(emojis, id: \.self) { emoji in
-                                Text(emoji).font(.custom("emoji", size: 51))
+                                Text(emoji).font(.custom("emoji", size: 61))
                                     .onTapGesture {
                                         self.foodItemsStore.createdOrEditedFoodItem.emoji = emoji
                                     }
@@ -83,7 +85,15 @@ struct ContentView: View {
                         }
                     }
                     Stepper(value: $foodItemsStore.createdOrEditedFoodItem.stars, in: 0...5) {
-                        Text("Number of Stars: \(self.foodItemsStore.createdOrEditedFoodItem.stars)")
+                        HStack {
+                            Text("Rating: ")
+                            
+                            HStack {
+                                ForEach(0 ..< self.foodItemsStore.createdOrEditedFoodItem.stars, id: \.self) { index in
+                                    Text("⭐️").font(.custom("rating", fixedSize: 13.0))
+                                }
+                            }
+                        }
                     }
         
                     Button(action: {
@@ -102,15 +112,16 @@ struct ContentView: View {
                         }
                         
                         if fooditem.stars == 0 {
-                            return self.formError = "You need at least one star"
+                            return self.formError = "You need to rate the place"
                         }
                         
-                        if self.foodItemsStore.editedFoodItemIndex != nil {
-                            foodItemsStore.foodItems[self.foodItemsStore.editedFoodItemIndex!] = fooditem
-                        } else {
-                            foodItemsStore.foodItems.append(fooditem);
+                        Task {
+                            if self.foodItemsStore.editedFoodItemIndex != nil {
+                                foodItemsStore.foodItems[self.foodItemsStore.editedFoodItemIndex!] = fooditem
+                            } else {
+                                foodItemsStore.foodItems.append(fooditem);
+                            }
                         }
-                        
                         self.resetNewItemState()
                         self.showModal = false
                     }) {
