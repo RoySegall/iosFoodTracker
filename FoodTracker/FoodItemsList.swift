@@ -1,28 +1,19 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showModal = false
     @StateObject private var foodItemsStore = FoodItemsStore()
-    
-    @State private var error = ""
-    @State private var index: Int?;
-    @State private var placeName = ""
-    @State private var emoji = ""
-    @State private var location = ""
-    @State private var numberOfStars = 0
+    @State private var showModal = false
+    @State private var formError = ""
     
     private func resetNewItemState() {
-        self.error = ""
-        self.emoji = "";
-        self.placeName = ""
-        self.numberOfStars = 0
-        self.location = ""
+        self.formError = ""
+        self.foodItemsStore.createdOrEditedFoodItem = FoodItem(emoji: "", name: "", stars: 0, location: "")
     }
 
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Items you ranked")) {
+                Section(header: Text("Foods you liked")) {
                     ForEach(self.foodItemsStore.foodItems) { item in
                         HStack {
                             Text(item.emoji).font(.custom("emoji", fixedSize: 50.0))
@@ -50,22 +41,17 @@ struct ContentView: View {
                             .tint(.red)
                             
                             Button(action: {
-                                var editItem = self.foodItemsStore.foodItems.index {
+                                let editItemIndex = self.foodItemsStore.foodItems.firstIndex {
                                     $0.id == item.id
                                 }
                                 
-                                var itemToEdit = self.foodItemsStore.foodItems[editItem!];
-                                self.index = editItem!;
-                                self.emoji = itemToEdit.emoji;
-                                self.placeName = itemToEdit.name
-                                self.numberOfStars = itemToEdit.stars
-                                self.location = itemToEdit.location
+                                self.foodItemsStore.editedFoodItemIndex = editItemIndex;
+                                self.foodItemsStore.createdOrEditedFoodItem = self.foodItemsStore.foodItems[editItemIndex!]
                                 self.showModal = true
                             }) {
                                 Text("✏️ Edit")
                             }
                             .tint(.gray)
-
                         }
                     }
                     HStack {
@@ -83,67 +69,53 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showModal) {
                 Form {
-                    TextField("Place Name", text: $placeName)
-                    TextField("Location", text: $location)
+                    TextField("Place Name", text: $foodItemsStore.createdOrEditedFoodItem.name)
+                    TextField("Location", text: $foodItemsStore.createdOrEditedFoodItem.location)
                     ScrollView(.horizontal) {
                         HStack {
                             ForEach(emojis, id: \.self) { emoji in
                                 Text(emoji).font(.custom("emoji", size: 51))
                                     .onTapGesture {
-                                        self.emoji = emoji
+                                        self.foodItemsStore.createdOrEditedFoodItem.emoji = emoji
                                     }
-                                    .opacity(self.emoji == emoji ? 1.0 : 0.5)
+                                    .opacity(self.foodItemsStore.createdOrEditedFoodItem.emoji == emoji ? 1.0 : 0.5)
                             }
                         }
                     }
-                    Stepper(value: $numberOfStars, in: 0...5) {
-                        Text("Number of Stars: \(numberOfStars)")
+                    Stepper(value: $foodItemsStore.createdOrEditedFoodItem.stars, in: 0...5) {
+                        Text("Number of Stars: \(self.foodItemsStore.createdOrEditedFoodItem.stars)")
                     }
         
                     Button(action: {
-                        if self.placeName.isEmpty {
-                            return self.error = "Place name is required";
+                        let fooditem = self.foodItemsStore.createdOrEditedFoodItem;
+                        
+                        if fooditem.name.isEmpty {
+                            return self.formError = "Place name is required";
                         }
                         
-                        if self.location.isEmpty {
-                            return self.error = "Location is require"
+                        if fooditem.location.isEmpty {
+                            return self.formError = "Location is require"
                         }
                         
-                        if self.emoji.isEmpty {
-                            return self.error = "Emoji is required"
+                        if fooditem.emoji.isEmpty {
+                            return self.formError = "Emoji is required"
                         }
                         
-                        if self.numberOfStars == 0 {
-                            return self.error = "You need at least one star"
+                        if fooditem.stars == 0 {
+                            return self.formError = "You need at least one star"
                         }
                         
-                        var foodItem = FoodItem(
-                            emoji: self.emoji,
-                            name: self.placeName,
-                            stars: self.numberOfStars,
-                            location: self.location
-                        );
-                        
-                        if self.index != nil {
-                            foodItemsStore.foodItems[self.index!] = foodItem
+                        if self.foodItemsStore.editedFoodItemIndex != nil {
+                            foodItemsStore.foodItems[self.foodItemsStore.editedFoodItemIndex!] = fooditem
                         } else {
-                            foodItemsStore.foodItems.append(foodItem);
+                            foodItemsStore.foodItems.append(fooditem);
                         }
-                        
-                        foodItemsStore.foodItems.append(
-                            FoodItem(
-                                emoji: self.emoji,
-                                name: self.placeName,
-                                stars: self.numberOfStars,
-                                location: self.location
-                            )
-                        );
                         
                         self.resetNewItemState()
                         self.showModal = false
                     }) {
-                        if !self.error.isEmpty {
-                            Text(self.error).foregroundStyle(.red)
+                        if !self.formError.isEmpty {
+                            Text(self.formError).foregroundStyle(.red)
                         }
                         
                         Text("Submit")
@@ -153,7 +125,6 @@ struct ContentView: View {
                             .cornerRadius(10)
                     }
                 }
-                
             }
         }
     }

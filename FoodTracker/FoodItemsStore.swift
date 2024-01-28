@@ -11,8 +11,7 @@ struct FoodItem: Identifiable {
 }
 
 class FoodItemsStore: ObservableObject {
-    @Published var foodItems: [FoodItem] = [
-        FoodItem(emoji: "🍕", name: "pizza", stars: 5, location: "Litle tony's pizza shop"),
-        FoodItem(emoji: "🍔", name: "Hamburger", stars: 5, location: "Big kahonna burger"),
-    ]
+    @Published var foodItems: [FoodItem] = []
+    @Published var editedFoodItemIndex: Int?;
+    @Published var createdOrEditedFoodItem = FoodItem(emoji: "", name: "", stars: 0, location: "");
 }
