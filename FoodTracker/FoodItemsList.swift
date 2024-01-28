@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var foodItemsStore = FoodItemsStore()
     
     @State private var error = ""
+    @State private var index: Int?;
     @State private var placeName = ""
     @State private var emoji = ""
     @State private var location = ""
@@ -21,7 +22,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Food")) {
+                Section(header: Text("Items you ranked")) {
                     ForEach(self.foodItemsStore.foodItems) { item in
                         HStack {
                             Text(item.emoji).font(.custom("emoji", fixedSize: 50.0))
@@ -38,6 +39,33 @@ struct ContentView: View {
                                 Text(item.location).font(.subheadline).padding(.top, 1)
                             }
                             Spacer()
+                        }.swipeActions {
+                            Button(action: {
+                                self.foodItemsStore.foodItems = self.foodItemsStore.foodItems.filter {
+                                    $0.id != item.id
+                                }
+                            }) {
+                                Text("🗑️ Delete")
+                            }
+                            .tint(.red)
+                            
+                            Button(action: {
+                                var editItem = self.foodItemsStore.foodItems.index {
+                                    $0.id == item.id
+                                }
+                                
+                                var itemToEdit = self.foodItemsStore.foodItems[editItem!];
+                                self.index = editItem!;
+                                self.emoji = itemToEdit.emoji;
+                                self.placeName = itemToEdit.name
+                                self.numberOfStars = itemToEdit.stars
+                                self.location = itemToEdit.location
+                                self.showModal = true
+                            }) {
+                                Text("✏️ Edit")
+                            }
+                            .tint(.gray)
+
                         }
                     }
                     HStack {
@@ -87,6 +115,19 @@ struct ContentView: View {
                         
                         if self.numberOfStars == 0 {
                             return self.error = "You need at least one star"
+                        }
+                        
+                        var foodItem = FoodItem(
+                            emoji: self.emoji,
+                            name: self.placeName,
+                            stars: self.numberOfStars,
+                            location: self.location
+                        );
+                        
+                        if self.index != nil {
+                            foodItemsStore.foodItems[self.index!] = foodItem
+                        } else {
+                            foodItemsStore.foodItems.append(foodItem);
                         }
                         
                         foodItemsStore.foodItems.append(
