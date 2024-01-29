@@ -98,32 +98,34 @@ struct ContentView: View {
         
                     Button(action: {
                         let fooditem = self.foodItemsStore.createdOrEditedFoodItem;
+
+                        Task {                            
+                            if fooditem.name.isEmpty {
+                                return self.formError = "Place name is required";
+                            }
+                            
+                            if fooditem.location.isEmpty {
+                                return self.formError = "Location is require"
+                            }
+                            
+                            if fooditem.emoji.isEmpty {
+                                return self.formError = "Emoji is required"
+                            }
+                            
+                            if fooditem.stars == 0 {
+                                return self.formError = "You need to rate the place"
+                            }
                         
-                        if fooditem.name.isEmpty {
-                            return self.formError = "Place name is required";
-                        }
-                        
-                        if fooditem.location.isEmpty {
-                            return self.formError = "Location is require"
-                        }
-                        
-                        if fooditem.emoji.isEmpty {
-                            return self.formError = "Emoji is required"
-                        }
-                        
-                        if fooditem.stars == 0 {
-                            return self.formError = "You need to rate the place"
-                        }
-                        
-                        Task {
+
                             if self.foodItemsStore.editedFoodItemIndex != nil {
                                 foodItemsStore.foodItems[self.foodItemsStore.editedFoodItemIndex!] = fooditem
                             } else {
                                 foodItemsStore.foodItems.append(fooditem);
                             }
+                            
+                            self.resetNewItemState()
+                            self.showModal = false
                         }
-                        self.resetNewItemState()
-                        self.showModal = false
                     }) {
                         if !self.formError.isEmpty {
                             Text(self.formError).foregroundStyle(.red)
